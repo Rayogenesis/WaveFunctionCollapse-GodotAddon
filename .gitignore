@@ -13,3 +13,30 @@ export_presets.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+
+# GDExtension and C++
+####################
+# Compiled binaries
+addons/**/bin/
+*.dll
+*.so
+*.dylib
+*.lib
+*.exp
+*.pdb
+
+# SCons builds and cache
+GDExtension/.sconsign.dblite
+GDExtension/bin/
+build/
+
+# C++ objects and temporaries
+*.o
+*.obj
+*.a
+
+# System
+##########
+.DS_Store
+Thumbs.db
