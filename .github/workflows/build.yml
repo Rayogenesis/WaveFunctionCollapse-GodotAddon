@@ -6,19 +6,11 @@ on:
       - "v*"
 
 jobs:
-  build:
+  build-desktop:
     strategy:
       matrix:
         platform: [windows, linux, macos]
-        include:
-          - platform: windows
-            runner: windows-latest
-          - platform: linux
-            runner: ubuntu-latest
-          - platform: macos
-            runner: macos-latest
-
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.platform }}-latest
     
     steps:
       - name: Checkout code
@@ -26,7 +18,12 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install dependencies
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install build tools
         run: |
           python -m pip install scons
           if [[ "${{ matrix.platform }}" == "windows" ]]; then
@@ -59,9 +56,9 @@ jobs:
           submodules: recursive
 
       - name: Setup Android NDK
-        uses: actions/setup-android@v4
+        uses: android-actions/setup-android@v3
         with:
-          ndk-version: 25c
+          ndk-version: 25.2.9519653
 
       - name: Install dependencies
         run: |
@@ -80,8 +77,8 @@ jobs:
           name: android-${{ matrix.arch }}
           path: addons/wfc/bin/android/*
 
-  package-and-release:
-    needs: [build, build-android]
+  package-release:
+    needs: [build-desktop, build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -91,7 +88,7 @@ jobs:
           pattern: '*'
           merge-multiple: true
 
-      - name: Prepare package
+      - name: Create package structure
         run: |
           mkdir -p package/addons/wfc
           cp -r addons/wfc/* package/addons/wfc/
@@ -109,7 +106,7 @@ jobs:
           cd package
           zip -r ../wfc-plugin-${{ github.ref_name }}.zip *
 
-      - name: Create Release
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           files: wfc-plugin-${{ github.ref_name }}.zip
