@@ -1,116 +1,95 @@
-name: Build and Release WFC Plugin
+name: Build and Package WFC Plugin
 
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v*"
 
 jobs:
   build:
-    name: Compile GDExtension for multiple platforms
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        platform: [windows, linux, macos, android]
         include:
-          - os: ubuntu-latest
-            platform: linux
-            artifact_name: libwfc.linux.x86_64.so
-          - os: windows-latest
-            platform: windows
-            artifact_name: libwfc.windows.x86_64.dll
-          - os: macos-latest
-            platform: macos
-            artifact_name: libwfc.macos.x86_64.dylib
+          - platform: android
+            arch: arm64v8
+          - platform: android
+            arch: x86_64
 
+    runs-on: ${{ contains(matrix.platform, 'android') && 'ubuntu-latest' || format('{0}-latest', matrix.platform) }}
+    
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install SCons (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        run: sudo apt update && sudo apt install -y scons
-
-      - name: Install SCons (Windows)
-        if: matrix.os == 'windows-latest'
-        run: choco install scons
-
-      - name: Build GDExtension
-        run: scons platform=${{ matrix.platform }} target=release -j$(nproc)
-
-      - name: Upload built library
-        uses: actions/upload-artifact@v4
+      - name: Set up Android NDK
+        if: matrix.platform == 'android'
+        uses: android-actions/setup-ndk@v2
         with:
-          name: ${{ matrix.artifact_name }}
-          path: GDExtension/bin/${{ matrix.artifact_name }}
+          ndk-version: r25c
 
-  android-build:
-    name: Compile for Android
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Install dependencies
+        run: python -m pip install scons
 
-      - name: Install SCons
-        run: sudo apt update && sudo apt install -y scons
-
-      - name: Build for Android (ARM64)
-        run: scons platform=android target=release arch=arm64v8 -j$(nproc)
-
-      - name: Build for Android (x86_64)
-        run: scons platform=android target=release arch=x86_64 -j$(nproc)
-
-      - name: Upload built libraries
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-libs
-          path: |
-            GDExtension/bin/libwfc.android.arm64v8.so
-            GDExtension/bin/libwfc.android.x86_64.so
-
-  release:
-    name: Create Release
-    needs: [build, android-build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download all compiled artifacts
-        uses: actions/download-artifact@v4
-
-      - name: Prepare release folder
+      - name: Build for ${{ matrix.platform }}
+        env:
+          ANDROID_NDK_ROOT: ${{ github.workspace }}/android-ndk
         run: |
-          mkdir -p release/addons/wfc/bin
-          cp -r addons/wfc/demo release/addons/wfc/
-          cp addons/wfc/plugin.cfg release/addons/wfc/
-          cp addons/wfc/wfc_generator2d.gdextension release/addons/wfc/
-          cp LICENSE release/addons/wfc/
+          cd GDExtension
+          if [ "${{ matrix.platform }}" = "android" ]; then
+            scons platform=android target=template_release android_arch=${{ matrix.arch }} -j4
+            mkdir -p ../addons/wfc/bin/android
+            cp libwfc.* ../addons/wfc/bin/android/
+          else
+            scons platform=${{ matrix.platform }} target=template_release -j4
+            mkdir -p ../addons/wfc/bin/${{ matrix.platform }}
+            cp libwfc.* ../addons/wfc/bin/${{ matrix.platform }}/
+          fi
 
-          # Mover binarios compilados
-          mkdir -p release/addons/wfc/bin/windows
-          mkdir -p release/addons/wfc/bin/linux
-          mkdir -p release/addons/wfc/bin/macos
-          mkdir -p release/addons/wfc/bin/android
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform }}-${{ matrix.arch || 'x86_64' }}
+          path: |
+            addons/wfc/bin/${{ matrix.platform }}/*
 
-          mv libwfc.windows.x86_64.dll release/addons/wfc/bin/windows/
-          mv libwfc.linux.x86_64.so release/addons/wfc/bin/linux/
-          mv libwfc.macos.x86_64.dylib release/addons/wfc/bin/macos/
-          mv android-libs/libwfc.android.arm64v8.so release/addons/wfc/bin/android/
-          mv android-libs/libwfc.android.x86_64.so release/addons/wfc/bin/android/
+  package-and-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all binaries
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Prepare package structure
+        run: |
+          # Create root structure
+          mkdir -p package/addons/wfc
+          
+          # Copy base files
+          cp -r addons/wfc/* package/addons/wfc/
+          
+          # Copy repository root files
+          cp LICENSE package/addons/wfc/
+
+          # Reorganize binaries from artifacts
+          mkdir -p package/addons/wfc/bin
+          find artifacts -name '*.dll' -exec cp {} package/addons/wfc/bin/windows/ \;
+          find artifacts -name '*.so' -exec cp {} package/addons/wfc/bin/linux/ \;
+          find artifacts -name '*.dylib' -exec cp {} package/addons/wfc/bin/macos/ \;
+          find artifacts -name 'android-*' -exec cp {} package/addons/wfc/bin/android/ \;
 
       - name: Create ZIP archive
         run: |
-          version=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')
-          zip -r "WaveFunctionCollapse-GodotAddon-${version}.zip" release/addons
+          cd package
+          zip -r ../wfc-plugin-${{ github.ref_name }}.zip *
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
         with:
-          files: "WaveFunctionCollapse-GodotAddon-*.zip"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ github.ref }}
+          files: |
+            wfc-plugin-${{ github.ref_name }}.zip
+          tag_name: ${{ github.ref_name }}
