@@ -30,8 +30,13 @@ jobs:
         run: |
           cd GDExtension
           scons platform=${{ matrix.platform }} target=template_release -j4
+          
+          # Listar archivos generados para debug
+          ls -lah
+          
+          # Copiar con nombre exacto
           mkdir -p ../addons/wfc/bin/${{ matrix.platform }}
-          cp libwfc.${{ matrix.platform }}.* ../addons/wfc/bin/${{ matrix.platform }}/
+          cp libwfc.${{ matrix.platform }}.x86_64.* ../addons/wfc/bin/${{ matrix.platform }}/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -56,10 +61,10 @@ jobs:
           cp -r addons/wfc/* package/addons/wfc/
           cp LICENSE package/addons/wfc/
           
-          # Organize binaries
+          # Copiar binarios con verificación
           mkdir -p package/addons/wfc/bin/{windows,linux}
-          cp -r artifacts/windows/* package/addons/wfc/bin/windows/
-          cp -r artifacts/linux/* package/addons/wfc/bin/linux/
+          [ -d artifacts/windows ] && cp artifacts/windows/* package/addons/wfc/bin/windows/
+          [ -d artifacts/linux ] && cp artifacts/linux/* package/addons/wfc/bin/linux/
 
       - name: Create ZIP
         run: |
