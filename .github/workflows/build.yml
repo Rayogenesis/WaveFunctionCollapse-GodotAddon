@@ -9,8 +9,8 @@ jobs:
   build-desktop:
     strategy:
       matrix:
-        platform: [windows, linux, macos]
-      fail-fast: false  # ¡Nuevo! Evita que fallen otros jobs
+        platform: [windows, linux]
+      fail-fast: false
     runs-on: ${{ matrix.platform }}-latest
     
     steps:
@@ -31,7 +31,7 @@ jobs:
           cd GDExtension
           scons platform=${{ matrix.platform }} target=template_release -j4
           mkdir -p ../addons/wfc/bin/${{ matrix.platform }}
-          cp libwfc.* ../addons/wfc/bin/${{ matrix.platform }}/
+          cp libwfc.${{ matrix.platform }}.* ../addons/wfc/bin/${{ matrix.platform }}/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -39,44 +39,8 @@ jobs:
           name: ${{ matrix.platform }}
           path: addons/wfc/bin/${{ matrix.platform }}/*
 
-  build-android:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [arm64-v8a, x86_64]
-      fail-fast: false
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Android NDK
-        uses: actions/setup-android@v2
-        with:
-          ndk-version: 25c
-          packages: ndk;25.2.9519653
-
-      - name: Install dependencies
-        run: |
-          python -m pip install scons
-
-      - name: Build for Android (${{ matrix.arch }})
-        run: |
-          cd GDExtension
-          scons platform=android target=template_release android_arch=${{ matrix.arch }} -j4
-          mkdir -p ../addons/wfc/bin/android
-          cp libwfc.* ../addons/wfc/bin/android/
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-${{ matrix.arch }}
-          path: addons/wfc/bin/android/*
-
   package-release:
-    needs: [build-desktop, build-android]
+    needs: [build-desktop]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -93,11 +57,9 @@ jobs:
           cp LICENSE package/addons/wfc/
           
           # Organize binaries
-          mkdir -p package/addons/wfc/bin/{windows,linux,macos,android}
-          cp artifacts/windows/* package/addons/wfc/bin/windows/
-          cp artifacts/linux/* package/addons/wfc/bin/linux/
-          cp artifacts/macos/* package/addons/wfc/bin/macos/
-          cp artifacts/android-*/* package/addons/wfc/bin/android/
+          mkdir -p package/addons/wfc/bin/{windows,linux}
+          cp -r artifacts/windows/* package/addons/wfc/bin/windows/
+          cp -r artifacts/linux/* package/addons/wfc/bin/linux/
 
       - name: Create ZIP
         run: |
