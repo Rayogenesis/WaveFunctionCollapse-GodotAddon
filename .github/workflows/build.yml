@@ -6,7 +6,7 @@ on:
       - "v*"
 
 jobs:
-  build-desktop:
+  build:
     strategy:
       matrix:
         platform: [windows, linux]
@@ -31,14 +31,13 @@ jobs:
           cd GDExtension
           scons platform=${{ matrix.platform }} target=template_release -j4
           
-          # Copiar con nombre exacto según plataforma
-          if [ "${{ matrix.platform }}" == "windows" ]; then
-            mkdir -p ../addons/wfc/bin/windows
-            cp libwfc.windows.x86_64.dll ../addons/wfc/bin/windows/
-          else
-            mkdir -p ../addons/wfc/bin/linux
-            cp libwfc.linux.x86_64.so ../addons/wfc/bin/linux/
-          fi
+          # Debug: Listar archivos generados
+          echo "=== ARCHIVOS EN GDExtension/ ==="
+          ls -lah
+          
+          # Copiar con patrón exacto
+          mkdir -p ../addons/wfc/bin/${{ matrix.platform }}
+          cp libwfc.${{ matrix.platform }}.*x86_64.* ../addons/wfc/bin/${{ matrix.platform }}/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -46,8 +45,8 @@ jobs:
           name: ${{ matrix.platform }}
           path: addons/wfc/bin/${{ matrix.platform }}/*
 
-  package-release:
-    needs: [build-desktop]
+  package:
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -61,9 +60,12 @@ jobs:
         run: |
           mkdir -p package/addons/wfc
           cp -r addons/wfc/* package/addons/wfc/
-          cp LICENSE package/addons/wfc/
-          cp -r artifacts/windows package/addons/wfc/bin/
-          cp -r artifacts/linux package/addons/wfc/bin/
+          cp LICENSE README.md package/
+          
+          # Forzar creación de directorios
+          mkdir -p package/addons/wfc/bin/{windows,linux}
+          [ -f artifacts/windows/* ] && cp artifacts/windows/* package/addons/wfc/bin/windows/
+          [ -f artifacts/linux/* ] && cp artifacts/linux/* package/addons/wfc/bin/linux/
 
       - name: Create ZIP
         run: |
