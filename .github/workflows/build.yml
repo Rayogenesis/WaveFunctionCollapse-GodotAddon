@@ -16,7 +16,7 @@ jobs:
           - platform: android
             arch: x86_64
 
-    runs-on: ${{ contains(matrix.platform, 'android') && 'ubuntu-latest' || format('{0}-latest', matrix.platform) }}
+    runs-on: ${{ matrix.platform == 'android' && 'ubuntu-latest' || format('{0}-latest', matrix.platform) }}
     
     steps:
       - name: Checkout code
@@ -24,14 +24,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set up Android NDK
+      - name: Setup Android SDK
         if: matrix.platform == 'android'
-        uses: android-actions/setup-ndk@v2
+        uses: android-actions/setup-android@v2
         with:
-          ndk-version: r25c
+          ndk-version: 25c # Versión equivalente a r25c
 
       - name: Install dependencies
-        run: python -m pip install scons
+        run: |
+          python -m pip install scons
+          if [ "${{ matrix.platform }}" == "macos" ]; then
+            brew install coreutils
+          fi
 
       - name: Build for ${{ matrix.platform }}
         env:
@@ -66,21 +70,16 @@ jobs:
 
       - name: Prepare package structure
         run: |
-          # Create root structure
           mkdir -p package/addons/wfc
-          
-          # Copy base files
           cp -r addons/wfc/* package/addons/wfc/
-          
-          # Copy repository root files
           cp LICENSE package/addons/wfc/
-
-          # Reorganize binaries from artifacts
-          mkdir -p package/addons/wfc/bin
+          
+          # Organize binaries
+          mkdir -p package/addons/wfc/bin/{windows,linux,macos,android}
           find artifacts -name '*.dll' -exec cp {} package/addons/wfc/bin/windows/ \;
           find artifacts -name '*.so' -exec cp {} package/addons/wfc/bin/linux/ \;
           find artifacts -name '*.dylib' -exec cp {} package/addons/wfc/bin/macos/ \;
-          find artifacts -name 'android-*' -exec cp {} package/addons/wfc/bin/android/ \;
+          find artifacts -name 'android-*' -exec cp -r {} package/addons/wfc/bin/android/ \;
 
       - name: Create ZIP archive
         run: |
