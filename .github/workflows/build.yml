@@ -9,14 +9,16 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [windows, linux, macos, android]
+        platform: [windows, linux, macos]
         include:
-          - platform: android
-            arch: arm64v8
-          - platform: android
-            arch: x86_64
+          - platform: windows
+            runner: windows-latest
+          - platform: linux
+            runner: ubuntu-latest
+          - platform: macos
+            runner: macos-latest
 
-    runs-on: ${{ matrix.platform == 'android' && 'ubuntu-latest' || format('{0}-latest', matrix.platform) }}
+    runs-on: ${{ matrix.runner }}
     
     steps:
       - name: Checkout code
@@ -24,51 +26,72 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Android SDK
-        if: matrix.platform == 'android'
-        uses: android-actions/setup-android@v2
-        with:
-          ndk-version: 25c # Versión equivalente a r25c
-
       - name: Install dependencies
         run: |
           python -m pip install scons
-          if [ "${{ matrix.platform }}" == "macos" ]; then
-            brew install coreutils
+          if [[ "${{ matrix.platform }}" == "windows" ]]; then
+            choco install make
           fi
 
       - name: Build for ${{ matrix.platform }}
-        env:
-          ANDROID_NDK_ROOT: ${{ github.workspace }}/android-ndk
         run: |
           cd GDExtension
-          if [ "${{ matrix.platform }}" = "android" ]; then
-            scons platform=android target=template_release android_arch=${{ matrix.arch }} -j4
-            mkdir -p ../addons/wfc/bin/android
-            cp libwfc.* ../addons/wfc/bin/android/
-          else
-            scons platform=${{ matrix.platform }} target=template_release -j4
-            mkdir -p ../addons/wfc/bin/${{ matrix.platform }}
-            cp libwfc.* ../addons/wfc/bin/${{ matrix.platform }}/
-          fi
+          scons platform=${{ matrix.platform }} target=template_release -j4
+          mkdir -p ../addons/wfc/bin/${{ matrix.platform }}
+          cp libwfc.* ../addons/wfc/bin/${{ matrix.platform }}/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-${{ matrix.arch || 'x86_64' }}
-          path: |
-            addons/wfc/bin/${{ matrix.platform }}/*
+          name: ${{ matrix.platform }}
+          path: addons/wfc/bin/${{ matrix.platform }}/*
+
+  build-android:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64v8, x86_64]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Android NDK
+        uses: actions/setup-android@v4
+        with:
+          ndk-version: 25c
+
+      - name: Install dependencies
+        run: |
+          python -m pip install scons
+
+      - name: Build for Android (${{ matrix.arch }})
+        run: |
+          cd GDExtension
+          scons platform=android target=template_release android_arch=${{ matrix.arch }} -j4
+          mkdir -p ../addons/wfc/bin/android
+          cp libwfc.* ../addons/wfc/bin/android/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.arch }}
+          path: addons/wfc/bin/android/*
 
   package-and-release:
-    needs: build
+    needs: [build, build-android]
     runs-on: ubuntu-latest
     steps:
-      - name: Download all binaries
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: '*'
+          merge-multiple: true
 
-      - name: Prepare package structure
+      - name: Prepare package
         run: |
           mkdir -p package/addons/wfc
           cp -r addons/wfc/* package/addons/wfc/
@@ -76,19 +99,18 @@ jobs:
           
           # Organize binaries
           mkdir -p package/addons/wfc/bin/{windows,linux,macos,android}
-          find artifacts -name '*.dll' -exec cp {} package/addons/wfc/bin/windows/ \;
-          find artifacts -name '*.so' -exec cp {} package/addons/wfc/bin/linux/ \;
-          find artifacts -name '*.dylib' -exec cp {} package/addons/wfc/bin/macos/ \;
-          find artifacts -name 'android-*' -exec cp -r {} package/addons/wfc/bin/android/ \;
+          cp -r artifacts/windows/* package/addons/wfc/bin/windows/
+          cp -r artifacts/linux/* package/addons/wfc/bin/linux/
+          cp -r artifacts/macos/* package/addons/wfc/bin/macos/
+          cp -r artifacts/android-*/* package/addons/wfc/bin/android/
 
-      - name: Create ZIP archive
+      - name: Create ZIP
         run: |
           cd package
           zip -r ../wfc-plugin-${{ github.ref_name }}.zip *
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            wfc-plugin-${{ github.ref_name }}.zip
+          files: wfc-plugin-${{ github.ref_name }}.zip
           tag_name: ${{ github.ref_name }}
