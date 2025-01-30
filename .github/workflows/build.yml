@@ -19,35 +19,29 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Python
+      - name: Install Python
         uses: actions/setup-python@v5
 
       - name: Install SCons
         run: python -m pip install scons
 
-      - name: Compile Godot-CPP
-        shell: bash  # Forzar bash para comandos Unix
-        run: |
-          cd GDExtension/godot-cpp
-          scons platform=${{ matrix.platform }} target=template_release -j4
-
       - name: Build Plugin
-        shell: bash  # Forzar bash
+        shell: bash
         run: |
+          # Crear directorio de salida primero
+          mkdir -p GDExtension/addons/wfc/bin/${{ matrix.platform }}
+          
+          # Compilar
           cd GDExtension
           scons platform=${{ matrix.platform }} target=template_release -j4
-
-      - name: Verify Build (Windows)
-        if: matrix.platform == 'windows'
-        run: |
-          echo "=== Archivos en Windows ==="
-          dir GDExtension\addons\wfc\bin\windows\
-
-      - name: Verify Build (Linux)
-        if: matrix.platform == 'linux'
-        run: |
-          echo "=== Archivos en Linux ==="
-          ls -lah GDExtension/addons/wfc/bin/linux/
+          
+          # Verificar archivos generados
+          echo "=== Archivos generados en ${{ matrix.platform }} ==="
+          if [ "${{ matrix.platform }}" == "windows" ]; then
+            ls GDExtension/addons/wfc/bin/windows/
+          else
+            ls GDExtension/addons/wfc/bin/linux/
+          fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -69,8 +63,10 @@ jobs:
           mkdir -p package/addons/wfc
           cp -r GDExtension/addons/wfc/* package/addons/wfc/
           cp LICENSE package/addons/wfc/
-          cp -r artifacts/windows package/addons/wfc/bin/
-          cp -r artifacts/linux package/addons/wfc/bin/
+          
+          # Copiar binarios solo si existen
+          [ -d artifacts/windows ] && cp -r artifacts/windows package/addons/wfc/bin/
+          [ -d artifacts/linux ] && cp -r artifacts/linux package/addons/wfc/bin/
 
       - name: Create ZIP
         run: |
