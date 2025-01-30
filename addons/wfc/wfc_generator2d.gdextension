@@ -1,0 +1,17 @@
+[configuration]
+entry_symbol = "wfc_generator2d_library_init"
+compatibility_minimum = "4.3"
+
+[libraries]
+# Windows
+windows.x86_64 = "res://addons/wfc/bin/windows/libwfc.windows.x86_64.dll"
+
+# Linux
+linux.x86_64 = "res://addons/wfc/bin/linux/libwfc.linux.x86_64.so"
+
+# macOS
+macos.x86_64 = "res://addons/wfc/bin/macos/libwfc.macos.x86_64.dylib"
+
+# Android (arm64 & x86_64)
+android.arm64v8 = "res://addons/wfc/bin/android/libwfc.android.arm64v8.so"
+android.x86_64 = "res://addons/wfc/bin/android/libwfc.android.x86_64.so"
