@@ -3,7 +3,7 @@ name: Build and Package WFC Plugin
 on:
   push:
     tags:
-      - "v*"  # Trigger on version tags (e.g. v1.0.0)
+      - "v*"
 
 jobs:
   build:
@@ -40,8 +40,12 @@ jobs:
           cd GDExtension
           if [ "${{ matrix.platform }}" = "android" ]; then
             scons platform=android target=template_release android_arch=${{ matrix.arch }} -j4
+            mkdir -p ../addons/wfc/bin/android
+            cp libwfc.* ../addons/wfc/bin/android/
           else
             scons platform=${{ matrix.platform }} target=template_release -j4
+            mkdir -p ../addons/wfc/bin/${{ matrix.platform }}
+            cp libwfc.* ../addons/wfc/bin/${{ matrix.platform }}/
           fi
 
       - name: Upload artifacts
@@ -49,7 +53,7 @@ jobs:
         with:
           name: ${{ matrix.platform }}-${{ matrix.arch || 'x86_64' }}
           path: |
-            GDExtension/libwfc.${{ matrix.platform }}.*
+            addons/wfc/bin/${{ matrix.platform }}/*
 
   package-and-release:
     needs: build
@@ -60,26 +64,23 @@ jobs:
         with:
           path: artifacts
 
-      - name: Create package structure
+      - name: Prepare package structure
         run: |
-          # Create directory structure
-          mkdir -p package/addons/wfc/{bin,demo}
+          # Create root structure
+          mkdir -p package/addons/wfc
           
-          # Copy core files
+          # Copy base files
+          cp -r addons/wfc/* package/addons/wfc/
+          
+          # Copy repository root files
           cp LICENSE package/addons/wfc/
-          cp addons/wfc/README.md package/addons/wfc/
-          cp addons/wfc/plugin.cfg package/addons/wfc/
-          cp addons/wfc/wfc_generator2d.gdextension package/addons/wfc/
-          
-          # Copy demo content
-          cp -r addons/wfc/demo/* package/addons/wfc/demo/
 
-          # Organize binaries
-          mkdir -p package/addons/wfc/bin/{windows,linux,macos,android}
-          cp artifacts/windows-x86_64/* package/addons/wfc/bin/windows/
-          cp artifacts/linux-x86_64/* package/addons/wfc/bin/linux/
-          cp artifacts/macos-x86_64/* package/addons/wfc/bin/macos/
-          cp artifacts/android-*/* package/addons/wfc/bin/android/
+          # Reorganize binaries from artifacts
+          mkdir -p package/addons/wfc/bin
+          find artifacts -name '*.dll' -exec cp {} package/addons/wfc/bin/windows/ \;
+          find artifacts -name '*.so' -exec cp {} package/addons/wfc/bin/linux/ \;
+          find artifacts -name '*.dylib' -exec cp {} package/addons/wfc/bin/macos/ \;
+          find artifacts -name 'android-*' -exec cp {} package/addons/wfc/bin/android/ \;
 
       - name: Create ZIP archive
         run: |
