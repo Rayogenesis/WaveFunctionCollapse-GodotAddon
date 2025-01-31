@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: GDExtension/bin/${{ matrix.artifact_name }}
+          path: GDExtension/bin/${{ matrix.platform }}/${{ matrix.artifact_name }}
 
   android-build:
     name: Compile for Android
@@ -92,8 +92,8 @@ jobs:
         with:
           name: android-libs
           path: |
-            GDExtension/bin/libwfc.android.arm64v8.so
-            GDExtension/bin/libwfc.android.x86_64.so
+            GDExtension/bin/android/libwfc.android.arm64v8.so
+            GDExtension/bin/android/libwfc.android.x86_64.so
 
   release:
     name: Create Release

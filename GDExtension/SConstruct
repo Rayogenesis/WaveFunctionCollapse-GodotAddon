@@ -28,13 +28,17 @@ elif env['platform'] == 'linux':
 
 elif env['platform'] == 'macos':
     # macOS: Dynamic library with Cocoa
-    env.Append(LINKFLAGS=["-framework Cocoa"])
+    env.Append(LINKFLAGS=["-Wl,-framework,Cocoa"])
     target_path = f"../addons/wfc/bin/macos/{lib_name}.macos.x86_64.dylib"
     shared_lib = env.SharedLibrary(target=target_path, source=sources)
 
 elif env['platform'] == 'android':
-    # Android: ARM64 architecture
-    env['android_arch'] = 'arm64v8'  # Options: 'armv7', 'arm64v8', 'x86_64'
+    ndk_path = os.environ.get("ANDROID_NDK_HOME", "/usr/local/lib/android/sdk/ndk/23.2.8568313")
+    if not os.path.exists(ndk_path):
+        print(f"Error: NDK not found at {ndk_path}")
+        Exit(1)
+    env.Append(CCFLAGS=[f"--sysroot={ndk_path}/toolchains/llvm/prebuilt/linux-x86_64/sysroot"])
+    env['android_arch'] = 'arm64v8'  # Opciones: 'armv7', 'arm64v8', 'x86_64'
     target_path = f"../addons/wfc/bin/android/{lib_name}.android.{env['android_arch']}.so"
     shared_lib = env.SharedLibrary(target=target_path, source=sources)
 
