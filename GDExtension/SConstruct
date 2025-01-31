@@ -18,18 +18,18 @@ lib_name = "libwfc"
 if env['platform'] == 'windows':
     # Windows: DLL output
     env.Append(LIBPATH=[])
-    target_path = f"../addons/wfc/bin/windows/{lib_name}"
+    target_path = f"../addons/wfc/bin/windows/{lib_name}.windows.x86_64.dll"
     shared_lib = env.SharedLibrary(target=target_path, source=sources)
 
 elif env['platform'] == 'linux':
     # Linux: Shared object
-    target_path = f"../addons/wfc/bin/linux/{lib_name}"
+    target_path = f"../addons/wfc/bin/linux/{lib_name}.linux.x86_64.so"
     shared_lib = env.SharedLibrary(target=target_path, source=sources)
 
 elif env['platform'] == 'macos':
     # macOS: Dynamic library with Cocoa
     env.Append(LINKFLAGS=["-Wl,-framework,Cocoa"])
-    target_path = f"../addons/wfc/bin/macos/{lib_name}"
+    target_path = f"../addons/wfc/bin/macos/{lib_name}.macos.x86_64.dylib"
     shared_lib = env.SharedLibrary(target=target_path, source=sources)
 
 #elif env['platform'] == 'android':
