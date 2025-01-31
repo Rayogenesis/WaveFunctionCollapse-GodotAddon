@@ -1,16 +1,42 @@
-# Configuración esencial para Godot 4.3
-env = SConscript("godot-cpp/SConstruct")
+# ---------------------------
+# GDExtension Build Configuration
+# Supports: Windows, Linux, macOS, Android
+# ---------------------------
 
-# Nombre explícito de la librería
+# Import godot-cpp environment
+env = SConscript('godot-cpp/SConstruct')
+
+# Source files
+env.Append(CPPPATH=["src/"])
+sources = Glob("src/*.cpp")
+
+# Library naming convention
 lib_name = "libwfc"
 
-# Fuentes
-src = Glob("src/*.cpp")
+# Platform-specific configurations
+# --------------------------------
+if env['platform'] == 'windows':
+    # Windows: DLL output
+    env.Append(LIBPATH=[])
+    target_path = f"../addons/wfc/bin/windows/{lib_name}.windows.x86_64.dll"
+    shared_lib = env.SharedLibrary(target=target_path, source=sources)
 
-# Build para Windows/Linux
-shared_lib = env.SharedLibrary(
-    target = f"../addons/wfc/bin/{env['platform']}/{lib_name}", 
-    source = src
-)
+elif env['platform'] == 'linux':
+    # Linux: Shared object
+    target_path = f"../addons/wfc/bin/linux/{lib_name}.linux.x86_64.so"
+    shared_lib = env.SharedLibrary(target=target_path, source=sources)
 
+elif env['platform'] == 'macos':
+    # macOS: Dynamic library with Cocoa
+    env.Append(LINKFLAGS=["-framework Cocoa"])
+    target_path = f"../addons/wfc/bin/macos/{lib_name}.macos.x86_64.dylib"
+    shared_lib = env.SharedLibrary(target=target_path, source=sources)
+
+elif env['platform'] == 'android':
+    # Android: ARM64 architecture
+    env['android_arch'] = 'arm64v8'  # Options: 'armv7', 'arm64v8', 'x86_64'
+    target_path = f"../addons/wfc/bin/android/{lib_name}.android.{env['android_arch']}.so"
+    shared_lib = env.SharedLibrary(target=target_path, source=sources)
+
+# Set default target
 Default(shared_lib)
