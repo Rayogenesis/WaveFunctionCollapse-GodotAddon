@@ -29,16 +29,20 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install SCons (Linux/macOS)
-        if: matrix.os != 'windows-latest'
+      - name: Install SCons (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt update && sudo apt install -y scons
 
       - name: Install SCons (Windows)
         if: matrix.os == 'windows-latest'
         run: choco install scons
 
+      - name: Install SCons (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install scons
+
       - name: Build GDExtension
-        run: scons platform=${{ matrix.platform }} target=release -j$(nproc)
+        run: cd GDExtension && scons platform=${{ matrix.platform }} target=release -j$(nproc)
 
       - name: Upload built library
         uses: actions/upload-artifact@v4
@@ -59,10 +63,10 @@ jobs:
         run: sudo apt update && sudo apt install -y scons
 
       - name: Build for Android (ARM64)
-        run: scons platform=android target=release arch=arm64v8 -j$(nproc)
+        run: cd GDExtension && scons platform=android target=release arch=arm64v8 -j$(nproc)
 
       - name: Build for Android (x86_64)
-        run: scons platform=android target=release arch=x86_64 -j$(nproc)
+        run: cd GDExtension && scons platform=android target=release arch=x86_64 -j$(nproc)
 
       - name: Upload built libraries
         uses: actions/upload-artifact@v4
@@ -91,7 +95,6 @@ jobs:
           cp addons/wfc/wfc_generator2d.gdextension release/addons/wfc/
           cp LICENSE release/addons/wfc/
 
-          # Mover binarios compilados
           mkdir -p release/addons/wfc/bin/windows
           mkdir -p release/addons/wfc/bin/linux
           mkdir -p release/addons/wfc/bin/macos
