@@ -16,12 +16,15 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             artifact_name: libwfc.linux.x86_64.so
+            cores: $(nproc)
           - os: windows-latest
             platform: windows
             artifact_name: libwfc.windows.x86_64.dll
+            cores: 2
           - os: macos-latest
             platform: macos
             artifact_name: libwfc.macos.x86_64.dylib
+            cores: $(sysctl -n hw.logicalcpu)
 
     steps:
       - name: Checkout repository
@@ -42,7 +45,7 @@ jobs:
         run: brew install scons
 
       - name: Build GDExtension
-        run: cd GDExtension && scons platform=${{ matrix.platform }} target=release -j$(nproc)
+        run: cd GDExtension && scons platform=${{ matrix.platform }} target=template_release -j${{ matrix.cores }}
 
       - name: Upload built library
         uses: actions/upload-artifact@v4
@@ -63,10 +66,10 @@ jobs:
         run: sudo apt update && sudo apt install -y scons
 
       - name: Build for Android (ARM64)
-        run: cd GDExtension && scons platform=android target=release arch=arm64v8 -j$(nproc)
+        run: cd GDExtension && scons platform=android target=template_release arch=arm64v8 -j$(nproc)
 
       - name: Build for Android (x86_64)
-        run: cd GDExtension && scons platform=android target=release arch=x86_64 -j$(nproc)
+        run: cd GDExtension && scons platform=android target=template_release arch=x86_64 -j$(nproc)
 
       - name: Upload built libraries
         uses: actions/upload-artifact@v4
