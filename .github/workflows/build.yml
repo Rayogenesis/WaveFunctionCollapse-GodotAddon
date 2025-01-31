@@ -57,37 +57,37 @@ jobs:
           path: addons/wfc/bin/${{ matrix.platform }}/${{ matrix.artifact_name }}
 
   release:
-    name: Package Release Files
+    name: Create Release
     needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-  
+
       - name: Download all compiled artifacts
         uses: actions/download-artifact@v4
-  
+
       - name: Prepare release folder
         run: |
-          mkdir -p release/addons/wfc/bin
-          cp -r addons/wfc/demo release/addons/wfc/
-          cp addons/wfc/plugin.cfg release/addons/wfc/
-          cp addons/wfc/wfc_generator2d.gdextension release/addons/wfc/
-          cp LICENSE release/addons/wfc/
-  
+          mkdir -p release/addons
+          cp -r addons/wfc release/addons/
+          cp LICENSE release/
+
+      - name: Move compiled libraries
+        run: |
           mkdir -p release/addons/wfc/bin/windows
           mkdir -p release/addons/wfc/bin/linux
           mkdir -p release/addons/wfc/bin/macos
-  
+
           mv libwfc.windows.x86_64.dll release/addons/wfc/bin/windows/
           mv libwfc.linux.x86_64.so release/addons/wfc/bin/linux/
           mv libwfc.macos.x86_64.dylib release/addons/wfc/bin/macos/
-  
+
       - name: Create ZIP archive
         run: |
           version=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')
-          zip -r "WaveFunctionCollapse-GodotAddon-${version}.zip" release/addons
-  
+          cd release && zip -r "../WaveFunctionCollapse-GodotAddon-${version}.zip" addons
+
       - name: Upload ZIP as artifact
         uses: actions/upload-artifact@v4
         with:
