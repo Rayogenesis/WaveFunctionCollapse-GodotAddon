@@ -69,27 +69,22 @@ jobs:
 
       - name: Prepare release folder
         run: |
-          mkdir -p addons
-          cp -r addons/wfc addons/
-          cp LICENSE addons/wfc/
+          mkdir -p release/addons
+          cp -r addons/wfc release/addons/
+          cp LICENSE release/addons/wfc/
 
       - name: Move compiled libraries
         run: |
-          mkdir -p addons/wfc/bin/windows
-          mkdir -p addons/wfc/bin/linux
-          mkdir -p addons/wfc/bin/macos
+          mkdir -p release/addons/wfc/bin/windows
+          mkdir -p release/addons/wfc/bin/linux
+          mkdir -p release/addons/wfc/bin/macos
 
-          mv libwfc.windows.x86_64.dll addons/wfc/bin/windows/
-          mv libwfc.linux.x86_64.so addons/wfc/bin/linux/
-          mv libwfc.macos.x86_64.dylib addons/wfc/bin/macos/
-
-      - name: Create ZIP archive
-        run: |
-          version=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')
-          zip -r "WaveFunctionCollapse-GodotAddon-${version}.zip" addons
+          mv libwfc.windows.x86_64.dll release/addons/wfc/bin/windows/
+          mv libwfc.linux.x86_64.so release/addons/wfc/bin/linux/
+          mv libwfc.macos.x86_64.dylib release/addons/wfc/bin/macos/
 
       - name: Upload ZIP as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WaveFunctionCollapse-GodotAddon-${{ github.ref_name }}
-          path: WaveFunctionCollapse-GodotAddon-${{ github.ref_name }}.zip
+          name: WaveFunctionCollapse-GodotAddon-${version}
+          path: release/
