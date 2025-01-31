@@ -57,16 +57,16 @@ jobs:
           path: addons/wfc/bin/${{ matrix.platform }}/${{ matrix.artifact_name }}
 
   release:
-    name: Create Release
+    name: Package Release Files
     needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+  
       - name: Download all compiled artifacts
         uses: actions/download-artifact@v4
-
+  
       - name: Prepare release folder
         run: |
           mkdir -p release/addons/wfc/bin
@@ -74,23 +74,22 @@ jobs:
           cp addons/wfc/plugin.cfg release/addons/wfc/
           cp addons/wfc/wfc_generator2d.gdextension release/addons/wfc/
           cp LICENSE release/addons/wfc/
-
+  
           mkdir -p release/addons/wfc/bin/windows
           mkdir -p release/addons/wfc/bin/linux
           mkdir -p release/addons/wfc/bin/macos
-
+  
           mv libwfc.windows.x86_64.dll release/addons/wfc/bin/windows/
           mv libwfc.linux.x86_64.so release/addons/wfc/bin/linux/
           mv libwfc.macos.x86_64.dylib release/addons/wfc/bin/macos/
-
+  
       - name: Create ZIP archive
         run: |
           version=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')
           zip -r "WaveFunctionCollapse-GodotAddon-${version}.zip" release/addons
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+  
+      - name: Upload ZIP as artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: "WaveFunctionCollapse-GodotAddon-*.zip"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ github.ref }}
+          name: WaveFunctionCollapse-GodotAddon
+          path: WaveFunctionCollapse-GodotAddon-*.zip
