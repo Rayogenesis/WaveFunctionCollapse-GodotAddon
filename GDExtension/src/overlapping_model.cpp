@@ -439,7 +439,7 @@ OverlappingModel::OverlappingModel(gd::TileMapLayer* sampleMap, gd::TileMapLayer
     for (int y = 0; y < ymax; ++y) {
         for (int x = 0; x < xmax; ++x) {
             // Creamos un vector con 8 patrones, 4 son para el original y sus rotaciones, otros 4 para cada reflejo
-            vector<vector<int16_t>> allPatterns(8, {});
+            vector<vector<int16_t>> allPatterns(8, vector<int16_t>());
             allPatterns[0] = makePattern([&](int dx, int dy) { return sample[(x + dx) % sampleWidth + (y + dy) % sampleHeight * sampleWidth]; }, patternSize);
 
             auto it0 = find(allPatterns[0].begin(), allPatterns[0].end(), -1);
