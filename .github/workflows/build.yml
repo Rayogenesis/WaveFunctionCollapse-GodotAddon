@@ -79,9 +79,9 @@ jobs:
           mkdir -p release/addons/wfc/bin/linux
           mkdir -p release/addons/wfc/bin/macos
 
-          mv libwfc.windows.x86_64.dll/ release/addons/wfc/bin/windows/
-          mv libwfc.linux.x86_64.so/ release/addons/wfc/bin/linux/
-          mv libwfc.macos.x86_64.dylib/ release/addons/wfc/bin/macos/
+          mv libwfc.windows.x86_64.dll/* release/addons/wfc/bin/windows/
+          mv libwfc.linux.x86_64.so/* release/addons/wfc/bin/linux/
+          mv libwfc.macos.x86_64.dylib/* release/addons/wfc/bin/macos/
 
       - name: Upload ZIP as artifact
         uses: actions/upload-artifact@v4
