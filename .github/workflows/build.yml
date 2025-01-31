@@ -1,80 +1,116 @@
-name: Build and Package WFC Plugin
+name: Build and Release
 
 on:
   push:
     tags:
-      - "v*"
+      - "v*.*.*"
 
 jobs:
   build:
+    name: Compile GDExtension for multiple platforms
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        platform: [windows, linux]
-      fail-fast: false
-    runs-on: ${{ matrix.platform }}-latest
-    
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact_name: libwfc.linux.x86_64.so
+          - os: windows-latest
+            platform: windows
+            artifact_name: libwfc.windows.x86_64.dll
+          - os: macos-latest
+            platform: macos
+            artifact_name: libwfc.macos.x86_64.dylib
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install Python
-        uses: actions/setup-python@v5
+      - name: Install SCons (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: sudo apt update && sudo apt install -y scons
 
-      - name: Install SCons
-        run: python -m pip install scons
+      - name: Install SCons (Windows)
+        if: matrix.os == 'windows-latest'
+        run: choco install scons
 
-      - name: Build Plugin
-        shell: bash
-        run: |
-          # Crear directorio de salida primero
-          mkdir -p GDExtension/addons/wfc/bin/${{ matrix.platform }}
-          
-          # Compilar
-          cd GDExtension
-          scons platform=${{ matrix.platform }} target=template_release -j4
-          
-          # Verificar archivos generados
-          echo "=== Archivos generados en ${{ matrix.platform }} ==="
-          if [ "${{ matrix.platform }}" == "windows" ]; then
-            ls GDExtension/addons/wfc/bin/windows/
-          else
-            ls GDExtension/addons/wfc/bin/linux/
-          fi
+      - name: Build GDExtension
+        run: scons platform=${{ matrix.platform }} target=release -j$(nproc)
 
-      - name: Upload Artifacts
+      - name: Upload built library
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}
-          path: GDExtension/addons/wfc/bin/${{ matrix.platform }}/*
+          name: ${{ matrix.artifact_name }}
+          path: GDExtension/bin/${{ matrix.artifact_name }}
 
-  package:
-    needs: [build]
+  android-build:
+    name: Compile for Android
     runs-on: ubuntu-latest
     steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          path: artifacts
+          submodules: recursive
 
-      - name: Create Package
+      - name: Install SCons
+        run: sudo apt update && sudo apt install -y scons
+
+      - name: Build for Android (ARM64)
+        run: scons platform=android target=release arch=arm64v8 -j$(nproc)
+
+      - name: Build for Android (x86_64)
+        run: scons platform=android target=release arch=x86_64 -j$(nproc)
+
+      - name: Upload built libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-libs
+          path: |
+            GDExtension/bin/libwfc.android.arm64v8.so
+            GDExtension/bin/libwfc.android.x86_64.so
+
+  release:
+    name: Create Release
+    needs: [build, android-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all compiled artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Prepare release folder
         run: |
-          mkdir -p package/addons/wfc
-          cp -r GDExtension/addons/wfc/* package/addons/wfc/
-          cp LICENSE package/addons/wfc/
-          
-          # Copiar binarios solo si existen
-          [ -d artifacts/windows ] && cp -r artifacts/windows package/addons/wfc/bin/
-          [ -d artifacts/linux ] && cp -r artifacts/linux package/addons/wfc/bin/
+          mkdir -p release/addons/wfc/bin
+          cp -r addons/wfc/demo release/addons/wfc/
+          cp addons/wfc/plugin.cfg release/addons/wfc/
+          cp addons/wfc/wfc_generator2d.gdextension release/addons/wfc/
+          cp LICENSE release/addons/wfc/
 
-      - name: Create ZIP
+          # Mover binarios compilados
+          mkdir -p release/addons/wfc/bin/windows
+          mkdir -p release/addons/wfc/bin/linux
+          mkdir -p release/addons/wfc/bin/macos
+          mkdir -p release/addons/wfc/bin/android
+
+          mv libwfc.windows.x86_64.dll release/addons/wfc/bin/windows/
+          mv libwfc.linux.x86_64.so release/addons/wfc/bin/linux/
+          mv libwfc.macos.x86_64.dylib release/addons/wfc/bin/macos/
+          mv android-libs/libwfc.android.arm64v8.so release/addons/wfc/bin/android/
+          mv android-libs/libwfc.android.x86_64.so release/addons/wfc/bin/android/
+
+      - name: Create ZIP archive
         run: |
-          cd package
-          zip -r ../wfc-plugin-${{ github.ref_name }}.zip *
+          version=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')
+          zip -r "WaveFunctionCollapse-GodotAddon-${version}.zip" release/addons
 
-      - name: Publish Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: wfc-plugin-${{ github.ref_name }}.zip
-          tag_name: ${{ github.ref_name }}
+          files: "WaveFunctionCollapse-GodotAddon-*.zip"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref }}
