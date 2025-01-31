@@ -54,10 +54,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: addons/wfc/bin/${{ matrix.platform }}/${{ matrix.artifact_name }}
+          path: addons/wfc/bin/${{ matrix.platform }}
 
   release:
-    name: Create Release
+    name: Package Release Files
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -69,27 +69,27 @@ jobs:
 
       - name: Prepare release folder
         run: |
-          mkdir -p release/addons
-          cp -r addons/wfc release/addons/
-          cp LICENSE release/
+          mkdir -p addons
+          cp -r addons/wfc addons/
+          cp LICENSE addons/wfc/
 
       - name: Move compiled libraries
         run: |
-          mkdir -p release/addons/wfc/bin/windows
-          mkdir -p release/addons/wfc/bin/linux
-          mkdir -p release/addons/wfc/bin/macos
+          mkdir -p addons/wfc/bin/windows
+          mkdir -p addons/wfc/bin/linux
+          mkdir -p addons/wfc/bin/macos
 
-          mv libwfc.windows.x86_64.dll release/addons/wfc/bin/windows/
-          mv libwfc.linux.x86_64.so release/addons/wfc/bin/linux/
-          mv libwfc.macos.x86_64.dylib release/addons/wfc/bin/macos/
+          mv libwfc.windows.x86_64.dll addons/wfc/bin/windows/
+          mv libwfc.linux.x86_64.so addons/wfc/bin/linux/
+          mv libwfc.macos.x86_64.dylib addons/wfc/bin/macos/
 
       - name: Create ZIP archive
         run: |
           version=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')
-          cd release && zip -r "../WaveFunctionCollapse-GodotAddon-${version}.zip" addons
+          zip -r "WaveFunctionCollapse-GodotAddon-${version}.zip" addons
 
       - name: Upload ZIP as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WaveFunctionCollapse-GodotAddon
-          path: WaveFunctionCollapse-GodotAddon-*.zip
+          name: WaveFunctionCollapse-GodotAddon-${{ github.ref_name }}
+          path: WaveFunctionCollapse-GodotAddon-${{ github.ref_name }}.zip
