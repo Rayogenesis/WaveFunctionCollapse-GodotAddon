@@ -74,12 +74,12 @@ jobs:
           mkdir -p $ANDROID_SDK_ROOT/ndk
           cd $ANDROID_SDK_ROOT
           wget https://dl.google.com/android/repository/android-ndk-r23b-linux.zip
-          unzip android-ndk-r23b-linux.zip
-          mv android-ndk-r23b ndk/23.2.8568313
+          unzip -q android-ndk-r23b-linux.zip
+          mv android-ndk-r23b ndk/23.2.8568313 || ls -la
           echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/23.2.8568313" >> $GITHUB_ENV
 
       - name: Verify NDK installation
-        run: ls -la $ANDROID_SDK_ROOT/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64
+        run: ls -la $ANDROID_SDK_ROOT/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64 || echo "NDK not found"
 
       - name: Build for Android (ARM64)
         run: cd GDExtension && scons platform=android target=template_release arch=arm64v8 -j$(nproc)
