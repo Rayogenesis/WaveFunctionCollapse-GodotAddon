@@ -100,6 +100,7 @@ public:
 	Heuristic heuristic;
 
 	Model(gd::Ref<gd::RandomNumberGenerator> rngRef, int width, int height, int N, bool periodic, Heuristic heuristic);
+	virtual ~Model() = default;
 
 	void Init();
 	bool Run(gd::Ref<gd::Mutex> mutex, gd::TileMapLayer* outputMap, int limit, bool countObservationAsFail, int decisionsWithoutBacktracking, bool realTimePainting); // Debería incluir el "Save". Si lo hacemos en otro lado, quitamos outputMap
