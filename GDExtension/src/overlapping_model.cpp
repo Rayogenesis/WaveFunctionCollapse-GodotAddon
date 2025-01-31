@@ -514,8 +514,8 @@ OverlappingModel::OverlappingModel(gd::TileMapLayer* sampleMap, gd::TileMapLayer
     }
 
     if (paintPatterns) {
-        int rows = gd::UtilityFunctions::floor(gd::UtilityFunctions::sqrt(patterns.size()));
-        int cols = gd::UtilityFunctions::ceil(patterns.size() / rows);
+        int rows = gd::UtilityFunctions::floori(gd::UtilityFunctions::sqrt(patterns.size()));
+        int cols = gd::UtilityFunctions::ceili(patterns.size() / rows);
         while (rows * cols < patterns.size()) ++rows;
     
         for (int y = 0; y < rows; ++y) {
