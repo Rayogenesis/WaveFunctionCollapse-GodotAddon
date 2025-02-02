@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=4 uid="uid://u4dkfmcciqtf"]
 
-[ext_resource type="Script" path="res://demoProjects/scripts/main.gd" id="1_b4a4o"]
-[ext_resource type="Texture2D" uid="uid://djvgpnd08w8xm" path="res://demoProjects/tileSets/flowersTS.png" id="2_smq5j"]
+[ext_resource type="Script" path="res://demo/scripts/main.gd" id="1_b4a4o"]
+[ext_resource type="Texture2D" uid="uid://djvgpnd08w8xm" path="res://demo/tileSets/flowersTS.png" id="2_smq5j"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_c417x"]
 texture = ExtResource("2_smq5j")
@@ -50,8 +50,8 @@ script = ExtResource("1_b4a4o")
 
 [node name="WFCGenerator2D" type="WFCGenerator2D" parent="." node_paths=PackedStringArray("sample_map", "patterns_map", "output_map")]
 pattern_size = 3
-output_map_width = 96
-output_map_height = 96
+output_map_width = 48
+output_map_height = 48
 limit_steps = 5
 decisions_without_backtracking = 0
 ground = true

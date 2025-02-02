@@ -11,7 +11,3 @@ linux.x86_64 = "res://addons/wfc/bin/linux/libwfc.linux.x86_64.so"
 
 # macOS
 macos.x86_64 = "res://addons/wfc/bin/macos/libwfc.macos.x86_64.dylib"
-
-# Android (arm64 & x86_64)
-android.arm64v8 = "res://addons/wfc/bin/android/libwfc.android.arm64v8.so"
-android.x86_64 = "res://addons/wfc/bin/android/libwfc.android.x86_64.so"
