@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=4 uid="uid://brrr77qcaalul"]
 
-[ext_resource type="Texture2D" uid="uid://cig37nmmn3xaj" path="res://demo/tiledProjects/Tiny Dungeon - Kenney/sampleMap_bank.png" id="1_jdec3"]
-[ext_resource type="Script" path="res://demo/scripts/main.gd" id="1_xlxsb"]
+[ext_resource type="Texture2D" uid="uid://cig37nmmn3xaj" path="res://addons/wfc/demo/tiledProjects/Tiny Dungeon - Kenney/sampleMap_bank.png" id="1_jdec3"]
+[ext_resource type="Script" path="res://addons/wfc/demo/scripts/main.gd" id="1_xlxsb"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jc60i"]
 texture = ExtResource("1_jdec3")

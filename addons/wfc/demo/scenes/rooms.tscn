@@ -1,7 +1,7 @@
 [gd_scene load_steps=9 format=4 uid="uid://cgsqhg4u4o0qt"]
 
-[ext_resource type="Script" path="res://demo/scripts/main.gd" id="1_es75s"]
-[ext_resource type="Texture2D" uid="uid://ctxtbivk48pv1" path="res://demo/tileSets/roomsTS.png" id="2_rcr2r"]
+[ext_resource type="Script" path="res://addons/wfc/demo/scripts/main.gd" id="1_es75s"]
+[ext_resource type="Texture2D" uid="uid://ctxtbivk48pv1" path="res://addons/wfc/demo/tileSets/roomsTS.png" id="2_rcr2r"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iiewg"]
 texture = ExtResource("2_rcr2r")

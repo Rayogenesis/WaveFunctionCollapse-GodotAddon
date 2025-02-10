@@ -1,7 +1,7 @@
 [gd_scene load_steps=9 format=4 uid="uid://dabb58j1mikvn"]
 
-[ext_resource type="Script" path="res://demo/scripts/main.gd" id="1_cugxq"]
-[ext_resource type="Texture2D" uid="uid://b5bg6repn11ot" path="res://demo/tiledProjects/Tiny Battle - Kenney/tinyBattleMap_bank.png" id="2_57p1t"]
+[ext_resource type="Script" path="res://addons/wfc/demo/scripts/main.gd" id="1_cugxq"]
+[ext_resource type="Texture2D" uid="uid://b5bg6repn11ot" path="res://addons/wfc/demo/tiledProjects/Tiny Battle - Kenney/tinyBattleMap_bank.png" id="2_57p1t"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ii7oi"]
 texture = ExtResource("2_57p1t")
