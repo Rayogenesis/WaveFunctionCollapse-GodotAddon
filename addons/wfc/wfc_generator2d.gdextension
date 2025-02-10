@@ -1,13 +1,12 @@
 [configuration]
+
 entry_symbol = "wfc_generator2d_library_init"
 compatibility_minimum = "4.3"
 
 [libraries]
-# Windows
-windows.x86_64 = "res://addons/wfc/bin/windows/libwfc.windows.x86_64.dll"
 
-# Linux
-linux.x86_64 = "res://addons/wfc/bin/linux/libwfc.linux.x86_64.so"
+windows.x86_64 = "bin/windows/libwfc.windows.x86_64.dll"
 
-# macOS
-macos.x86_64 = "res://addons/wfc/bin/macos/libwfc.macos.x86_64.dylib"
+linux.x86_64 = "bin/linux/libwfc.linux.x86_64.so"
+
+macos.x86_64 = "bin/macos/libwfc.macos.x86_64.dylib"
