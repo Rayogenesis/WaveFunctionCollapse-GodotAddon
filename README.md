@@ -1,6 +1,6 @@
 # Wave Function Collapse (Godot Addon)
 
-![Generated TileMapLayer example](media/readme/tiny_battle_example.png)
+<p align="center"><img alt="Generated TileMapLayer example" src="media/readme/tiny_battle_example.png"></p>
 
 This addon is the result of my Final Degree Project in Computer Engineering at Universitat Politècnica de Catalunya, where I aimed to faithfully adapt and implement the [original version](https://github.com/mxgmn/WaveFunctionCollapse) of the Wave Function Collapse (WFC) algorithm created by [Maxim Gumin](https://github.com/mxgmn). While the addon is functional, it still lacks some features and quality-of-life improvements that couldn't be implemented due to time constraints.
 
