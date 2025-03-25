@@ -320,85 +320,27 @@ void WFCGenerator2D::set_sample_map(TileMapLayer* input) {
 	Ref<TileSet> tileset = sampleMap->get_tile_set();
 
 	int count;
-	if (tileset->get_custom_data_layer_by_name("Pattern: FlipH / FlipV / Rotate") == -1)
-	{
-		// El patrón puede X
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "Pattern: FlipH / FlipV / Rotate");
-	}
-	if (tileset->get_custom_data_layer_by_name("Tile: FlipH / FlipV / Rotate") == -1)
-	{
-		// Si el patrón puede X, el tile puede X
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "Tile: FlipH / FlipV / Rotate");
-	}
-	if (tileset->get_custom_data_layer_by_name("Change: FlipH / FlipV / Rotate") == -1)
-	{
-		// Si el tile puede X, hace falta cambiar
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "Change: FlipH / FlipV / Rotate");
-	}
-	if (tileset->get_custom_data_layer_by_name("FlipH Change ID") == -1)
-	{
-		// H
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "FlipH Change ID");
-	}
-	if (tileset->get_custom_data_layer_by_name("FlipV Change ID") == -1)
-	{
-		// V
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "FlipV Change ID");
-	}
-	if (tileset->get_custom_data_layer_by_name("Rotate 90º Change ID") == -1)
-	{
-		// t + H
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "Rotate 90º Change ID");
-	}
-	if (tileset->get_custom_data_layer_by_name("Rotate 180º Change ID") == -1)
-	{
-		// H + V
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "Rotate 180º Change ID");
-	}
-	if (tileset->get_custom_data_layer_by_name("Rotate 270º Change ID") == -1)
-	{
-		// t + V
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "Rotate 270º Change ID");
-	}
-	if (tileset->get_custom_data_layer_by_name("Rotate 90º + FlipH Change ID") == -1)
-	{
-		// t
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "Rotate 90º + FlipH Change ID");
-	}
-	if (tileset->get_custom_data_layer_by_name("Rotate 90º + FlipV Change ID") == -1)
-	{
-		// t + H + V
-		count = tileset->get_custom_data_layers_count();
-		tileset->add_custom_data_layer();
-		tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
-		tileset->set_custom_data_layer_name(count, "Rotate 90º + FlipV Change ID");
+	const vector<godot::String> custom_data_layer_names = {
+		"Pattern: FlipH / FlipV / Rotate", // El patrón puede X
+		"Tile: FlipH / FlipV / Rotate", // Si el patrón puede X, el tile puede X
+		"Change: FlipH / FlipV / Rotate", // Si el tile puede X, hace falta cambiar
+		"FlipH Change ID", // H
+		"FlipV Change ID", // V
+		"Rotate 90º Change ID", // t + H
+		"Rotate 180º Change ID", // H + V
+		"Rotate 270º Change ID", // t + V
+		"Rotate 90º + FlipH Change ID", // t
+		"Rotate 90º + FlipV Change ID" // t + H + V
+	};
+
+	for (int i = 0; i < custom_data_layer_names.size(); ++i) {
+		if (tileset->get_custom_data_layer_by_name(custom_data_layer_names[i]) == -1)
+		{
+			count = tileset->get_custom_data_layers_count();
+			tileset->add_custom_data_layer();
+			tileset->set_custom_data_layer_type(count, Variant::VECTOR3I);
+			tileset->set_custom_data_layer_name(count, custom_data_layer_names[i]);
+		}
 	}
 }
 

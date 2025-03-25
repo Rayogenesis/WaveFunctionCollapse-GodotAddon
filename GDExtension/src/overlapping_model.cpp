@@ -168,250 +168,135 @@ OverlappingModel::OverlappingModel(gd::TileMapLayer* sampleMap, gd::TileMapLayer
             int16_t changeX, changeY, changeAlt;
             bool found = false;
             
-            if (tileProp.changeRotate) {
-                customData = tileData->get_custom_data("Rotate 90º Change ID");
-                changeX = customData.x;
-                changeY = customData.y;
-                changeAlt = customData.z;
-            
-                if (changeX != -1 && changeY != -1 && changeAlt != -1 &&
-                    (changeX != tileProp.AtlasX || changeY != tileProp.AtlasY || changeAlt != tileProp.AlterID)) {
-            
-                    found = false;
-                    for (int j = 0; j < tiles.size() && !found; ++j) {
-                        changeProp = tiles[j];
-                        if (tileProp.SourceID == changeProp.SourceID && changeX == changeProp.AtlasX && changeY == changeProp.AtlasY && changeAlt == changeProp.AlterID)
-                        {
-                            changeProp = tileProp;
-                            changeProp.AtlasX = changeX;
-                            changeProp.AtlasY = changeY;
-                            changeProp.AlterID = changeAlt;
-                            
-                            tileChange.Rotate90 = j;
-                            tiles[j] = changeProp;
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        changeProp = tileProp;
-                        changeProp.AtlasX = changeX;
-                        changeProp.AtlasY = changeY;
-                        changeProp.AlterID = changeAlt;
+            const vector<bool> changeBools = {
+                tileProp.changeRotate,
+                tileProp.changeRotate && tileProp.changeFlipH,
+                tileProp.changeRotate&& tileProp.changeFlipV,
+                tileProp.changeFlipH,
+                tileProp.changeFlipV
+            };
+
+            const vector<vector<godot::String>> change_custom_data_layers = {
+                {
+                    "Rotate 90º Change ID",
+                    "Rotate 180º Change ID",
+                    "Rotate 270º Change ID",
+                },
+                {
+                    "Rotate 90º + FlipH Change ID"
+                },
+                {
+                    "Rotate 90º + FlipV Change ID"
+                },
+                {
+                    "FlipH Change ID"
+                },
+                {
+                    "FlipV Change ID"
+                }
+            };
+
+            const vector<vector<int>> tile_change_prop = {
+                {
+                    0, 1, 2
+                },
+                {
+                    3
+                },
+                {
+                    4
+                },
+                {
+                    5
+                },
+                {
+                    6
+                }
+            };
+
+            for (int c = 0; c < changeBools.size(); ++c) {
+                if (changeBools[c]) {
+                    for (int cdl = 0; cdl < change_custom_data_layers[c].size(); ++cdl) {
+                        customData = tileData->get_custom_data(change_custom_data_layers[c][cdl]);
+                        changeX = customData.x;
+                        changeY = customData.y;
+                        changeAlt = customData.z;
                         
-                        tileChange.Rotate90 = tiles.size();
-                        tiles.push_back(changeProp);
-                    }
-                }
+                        if (changeX != -1 && changeY != -1 && changeAlt != -1 &&
+                            (changeX != tileProp.AtlasX || changeY != tileProp.AtlasY || changeAlt != tileProp.AlterID)) {
+                        
+                            int tileChangeProp = tile_change_prop[c][cdl];
+                            found = false;
+                            for (int j = 0; j < tiles.size() && !found; ++j) {
+                                changeProp = tiles[j];
+                                if (tileProp.SourceID == changeProp.SourceID && changeX == changeProp.AtlasX && changeY == changeProp.AtlasY && changeAlt == changeProp.AlterID)
+                                {
+                                    changeProp = tileProp;
+                                    changeProp.AtlasX = changeX;
+                                    changeProp.AtlasY = changeY;
+                                    changeProp.AlterID = changeAlt;
 
-                customData = tileData->get_custom_data("Rotate 180º Change ID");
-                changeX = customData.x;
-                changeY = customData.y;
-                changeAlt = customData.z;
+                                    switch (tileChangeProp) {
+                                    case 0:
+                                        tileChange.Rotate90 = j;
+                                        break;
+                                    case 1:
+                                        tileChange.Rotate180 = j;
+                                        break;
+                                    case 2:
+                                        tileChange.Rotate270 = j;
+                                        break;
+                                    case 3:
+                                        tileChange.Rotate90FlipH = j;
+                                        break;
+                                    case 4:
+                                        tileChange.Rotate90FlipV = j;
+                                        break;
+                                    case 5:
+                                        tileChange.FlipH = j;
+                                        break;
+                                    case 6:
+                                        tileChange.FlipV = j;
+                                        break;
+                                    }
 
-                if (changeX != -1 && changeY != -1 && changeAlt != -1 &&
-                    (changeX != tileProp.AtlasX || changeY != tileProp.AtlasY || changeAlt != tileProp.AlterID)) {
-
-                    found = false;
-                    for (int j = 0; j < tiles.size() && !found; ++j) {
-                        changeProp = tiles[j];
-                        if (tileProp.SourceID == changeProp.SourceID && changeX == changeProp.AtlasX && changeY == changeProp.AtlasY && changeAlt == changeProp.AlterID)
-                        {
-                            changeProp = tileProp;
-                            changeProp.AtlasX = changeX;
-                            changeProp.AtlasY = changeY;
-                            changeProp.AlterID = changeAlt;
-
-                            tileChange.Rotate180 = j;
-                            tiles[j] = changeProp;
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        changeProp = tileProp;
-                        changeProp.AtlasX = changeX;
-                        changeProp.AtlasY = changeY;
-                        changeProp.AlterID = changeAlt;
-
-                        tileChange.Rotate180 = tiles.size();
-                        tiles.push_back(changeProp);
-                    }
-                }
-
-                customData = tileData->get_custom_data("Rotate 270º Change ID");
-                changeX = customData.x;
-                changeY = customData.y;
-                changeAlt = customData.z;
-
-                if (changeX != -1 && changeY != -1 && changeAlt != -1 &&
-                    (changeX != tileProp.AtlasX || changeY != tileProp.AtlasY || changeAlt != tileProp.AlterID)) {
-
-                    found = false;
-                    for (int j = 0; j < tiles.size() && !found; ++j) {
-                        changeProp = tiles[j];
-                        if (tileProp.SourceID == changeProp.SourceID && changeX == changeProp.AtlasX && changeY == changeProp.AtlasY && changeAlt == changeProp.AlterID)
-                        {
-                            changeProp = tileProp;
-                            changeProp.AtlasX = changeX;
-                            changeProp.AtlasY = changeY;
-                            changeProp.AlterID = changeAlt;
-
-                            tileChange.Rotate270 = j;
-                            tiles[j] = changeProp;
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        changeProp = tileProp;
-                        changeProp.AtlasX = changeX;
-                        changeProp.AtlasY = changeY;
-                        changeProp.AlterID = changeAlt;
-
-                        tileChange.Rotate270 = tiles.size();
-                        tiles.push_back(changeProp);
-                    }
-                }
-
-                if (tileProp.changeFlipH) {
-                    customData = tileData->get_custom_data("Rotate 90º + FlipH Change ID");
-                    changeX = customData.x;
-                    changeY = customData.y;
-                    changeAlt = customData.z;
-
-                    if (changeX != -1 && changeY != -1 && changeAlt != -1 &&
-                        (changeX != tileProp.AtlasX || changeY != tileProp.AtlasY || changeAlt != tileProp.AlterID)) {
-
-                        found = false;
-                        for (int j = 0; j < tiles.size() && !found; ++j) {
-                            changeProp = tiles[j];
-                            if (tileProp.SourceID == changeProp.SourceID && changeX == changeProp.AtlasX && changeY == changeProp.AtlasY && changeAlt == changeProp.AlterID)
-                            {
+                                    tiles[j] = changeProp;
+                                    found = true;
+                                }
+                            }
+                            if (!found) {
                                 changeProp = tileProp;
                                 changeProp.AtlasX = changeX;
                                 changeProp.AtlasY = changeY;
                                 changeProp.AlterID = changeAlt;
-
-                                tileChange.Rotate90FlipH = j;
-                                tiles[j] = changeProp;
-                                found = true;
+                        
+                                switch (tileChangeProp) {
+                                case 0:
+                                    tileChange.Rotate90 = tiles.size();
+                                    break;
+                                case 1:
+                                    tileChange.Rotate180 = tiles.size();
+                                    break;
+                                case 2:
+                                    tileChange.Rotate270 = tiles.size();
+                                    break;
+                                case 3:
+                                    tileChange.Rotate90FlipH = tiles.size();
+                                    break;
+                                case 4:
+                                    tileChange.Rotate90FlipV = tiles.size();
+                                    break;
+                                case 5:
+                                    tileChange.FlipH = tiles.size();
+                                    break;
+                                case 6:
+                                    tileChange.FlipV = tiles.size();
+                                    break;
+                                }
+                                
+                                tiles.push_back(changeProp);
                             }
                         }
-                        if (!found) {
-                            changeProp = tileProp;
-                            changeProp.AtlasX = changeX;
-                            changeProp.AtlasY = changeY;
-                            changeProp.AlterID = changeAlt;
-
-                            tileChange.Rotate90FlipH = tiles.size();
-                            tiles.push_back(changeProp);
-                        }
-                    }
-                }
-
-                if (tileProp.changeFlipV) {
-                    customData = tileData->get_custom_data("Rotate 90º + FlipV Change ID");
-                    changeX = customData.x;
-                    changeY = customData.y;
-                    changeAlt = customData.z;
-
-                    if (changeX != -1 && changeY != -1 && changeAlt != -1 &&
-                        (changeX != tileProp.AtlasX || changeY != tileProp.AtlasY || changeAlt != tileProp.AlterID)) {
-
-                        found = false;
-                        for (int j = 0; j < tiles.size() && !found; ++j) {
-                            changeProp = tiles[j];
-                            if (tileProp.SourceID == changeProp.SourceID && changeX == changeProp.AtlasX && changeY == changeProp.AtlasY && changeAlt == changeProp.AlterID)
-                            {
-                                changeProp = tileProp;
-                                changeProp.AtlasX = changeX;
-                                changeProp.AtlasY = changeY;
-                                changeProp.AlterID = changeAlt;
-
-                                tileChange.Rotate90FlipV = j;
-                                tiles[j] = changeProp;
-                                found = true;
-                            }
-                        }
-                        if (!found) {
-                            changeProp = tileProp;
-                            changeProp.AtlasX = changeX;
-                            changeProp.AtlasY = changeY;
-                            changeProp.AlterID = changeAlt;
-
-                            tileChange.Rotate90FlipV = tiles.size();
-                            tiles.push_back(changeProp);
-                        }
-                    }
-                }
-            }
-
-            if (tileProp.changeFlipH) {
-                customData = tileData->get_custom_data("FlipH Change ID");
-                changeX = customData.x;
-                changeY = customData.y;
-                changeAlt = customData.z;
-
-                if (changeX != -1 && changeY != -1 && changeAlt != -1 &&
-                    (changeX != tileProp.AtlasX || changeY != tileProp.AtlasY || changeAlt != tileProp.AlterID)) {
-
-                    found = false;
-                    for (int j = 0; j < tiles.size() && !found; ++j) {
-                        changeProp = tiles[j];
-                        if (tileProp.SourceID == changeProp.SourceID && changeX == changeProp.AtlasX && changeY == changeProp.AtlasY && changeAlt == changeProp.AlterID)
-                        {
-                            changeProp = tileProp;
-                            changeProp.AtlasX = changeX;
-                            changeProp.AtlasY = changeY;
-                            changeProp.AlterID = changeAlt;
-
-                            tileChange.FlipH = j;
-                            tiles[j] = changeProp;
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        changeProp = tileProp;
-                        changeProp.AtlasX = changeX;
-                        changeProp.AtlasY = changeY;
-                        changeProp.AlterID = changeAlt;
-
-                        tileChange.FlipH = tiles.size();
-                        tiles.push_back(changeProp);
-                    }
-                }
-            }
-
-            if (tileProp.changeFlipV) {
-                customData = tileData->get_custom_data("FlipV Change ID");
-                changeX = customData.x;
-                changeY = customData.y;
-                changeAlt = customData.z;
-
-                if (changeX != -1 && changeY != -1 && changeAlt != -1 &&
-                    (changeX != tileProp.AtlasX || changeY != tileProp.AtlasY || changeAlt != tileProp.AlterID)) {
-
-                    found = false;
-                    for (int j = 0; j < tiles.size() && !found; ++j) {
-                        changeProp = tiles[j];
-                        if (tileProp.SourceID == changeProp.SourceID && changeX == changeProp.AtlasX && changeY == changeProp.AtlasY && changeAlt == changeProp.AlterID)
-                        {
-                            changeProp = tileProp;
-                            changeProp.AtlasX = changeX;
-                            changeProp.AtlasY = changeY;
-                            changeProp.AlterID = changeAlt;
-
-                            tileChange.FlipV = j;
-                            tiles[j] = changeProp;
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        changeProp = tileProp;
-                        changeProp.AtlasX = changeX;
-                        changeProp.AtlasY = changeY;
-                        changeProp.AlterID = changeAlt;
-
-                        tileChange.FlipV = tiles.size();
-                        tiles.push_back(changeProp);
                     }
                 }
             }
@@ -439,7 +324,7 @@ OverlappingModel::OverlappingModel(gd::TileMapLayer* sampleMap, gd::TileMapLayer
     for (int y = 0; y < ymax; ++y) {
         for (int x = 0; x < xmax; ++x) {
             // Creamos un vector con 8 patrones, 4 son para el original y sus rotaciones, otros 4 para cada reflejo
-            vector<vector<int16_t>> allPatterns(8, vector<int16_t>());
+            vector<vector<int16_t>> allPatterns(8, {});
             allPatterns[0] = makePattern([&](int dx, int dy) { return sample[(x + dx) % sampleWidth + (y + dy) % sampleHeight * sampleWidth]; }, patternSize);
 
             auto it0 = find(allPatterns[0].begin(), allPatterns[0].end(), -1);
